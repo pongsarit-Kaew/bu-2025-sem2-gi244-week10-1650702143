@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController3 : MonoBehaviour
 {
     public float jumpForce;
     public float gravityModifier;
@@ -10,6 +10,8 @@ public class PlayerController : MonoBehaviour
 
     public AudioClip jumpSfx;
     public AudioClip crashSfx;
+    public float dashForce = 10f; // แรงพุ่ง
+    private bool isDashing = false;
 
     private Rigidbody rb;
     private InputAction jumpAction;
@@ -43,20 +45,39 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        
+
         if (jumpAction.triggered && jumpCount < maxJumps && !gameOver)
         {
-            
+
             rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
 
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
 
-            jumpCount++; 
+            jumpCount++;
             isOnGround = false;
 
             playerAnim.SetTrigger("Jump_trig");
             dirtParticle.Stop();
             playerAudio.PlayOneShot(jumpSfx);
+        }
+        {
+            // เช็คการกดปุ่ม Shift และต้องไม่ GameOver
+            if (Input.GetKeyDown(KeyCode.LeftShift) && !gameOver && !isDashing)
+            {
+                StartCoroutine(DashRoutine());
+            }
+        }
+        // 2. ฟังก์ชัน Dash ที่แยกออกมาเป็นอิสระ (วางก่อนปีกกาปิดอันสุดท้ายของไฟล์)
+        System.Collections.IEnumerator DashRoutine()
+        {
+            isDashing = true;
+            Debug.Log("Dashing Now!");
+            // ใส่แรงพุ่งไปข้างหน้า (แกน X หรือ Z ขึ้นอยู่กับฉากของคุณ)
+            Rigidbody playerRb = GetComponent<Rigidbody>();
+            // ใช้ ForceMode.VelocityChange เพื่อให้พุ่งทันทีโดยไม่สนน้ำหนัก
+            playerRb.AddForce(Vector3.right * dashForce, ForceMode.VelocityChange);
+            yield return new WaitForSeconds(0.2f); // ระยะเวลาพุ่ง
+            isDashing = false;
         }
     }
 
